@@ -4,80 +4,653 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZenBudget - Profesional Tracker</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <!-- Icons (Boxicons) -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        /* === CSS VARIABLES (NEUMORPHISM) === */
+        :root {
+            --bg-color: #e0e5ec;
+            --text-main: #4d5974;
+            --text-light: #8a96a8;
+            --color-green: #38b000;
+            --color-red: #d00000;
+            --color-primary: #6c5ce7;
+            
+            /* Shadows */
+            --neu-out: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5);
+            --neu-out-hover: 4px 4px 8px rgb(163,177,198,0.6), -4px -4px 8px rgba(255,255,255, 0.5);
+            --neu-in: inset 6px 6px 10px 0 rgba(163,177,198, 0.5), inset -6px -6px 10px 0 rgba(255,255,255, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* === UTILITY CLASSES === */
+        .neumorphic {
+            background-color: var(--bg-color);
+            box-shadow: var(--neu-out);
+            border-radius: 20px;
+        }
+
+        .neumorphic-inset {
+            background-color: var(--bg-color);
+            box-shadow: var(--neu-in);
+            border-radius: 15px;
+        }
+        
+        .text-green { color: var(--color-green); font-weight: bold; }
+        .text-red { color: var(--color-red); font-weight: bold; }
+
+        /* === LAYOUT === */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            width: 260px;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary);
+        }
+
+        .brand i { font-size: 2rem; }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 600;
+            border-radius: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item a:hover, .nav-item.active a {
+            box-shadow: var(--neu-in);
+            color: var(--color-primary);
+        }
+
+        .nav-item a i { font-size: 1.2rem; }
+
+        .user-profile {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* === MAIN CONTENT === */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            border-radius: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            width: 300px;
+            border-radius: 20px;
+        }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            outline: none;
+            color: var(--text-main);
+            width: 100%;
+        }
+
+        .mobile-toggle {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: var(--neu-out);
+        }
+
+        /* === DASHBOARD GRID === */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        /* Summary Cards */
+        .summary-card {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .summary-card p { color: var(--text-light); font-size: 0.9rem; }
+        .summary-card h2 { font-size: 1.8rem; }
+        
+        /* Middle Section: Chart & Form */
+        .chart-section {
+            grid-column: span 2;
+            padding: 1.5rem;
+            height: 350px;
+        }
+
+        .form-section {
+            grid-column: span 1;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Form Inputs */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .neumorphic-input {
+            padding: 12px 15px;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-size: 1rem;
+            background-color: var(--bg-color);
+            border-radius: 12px;
+            box-shadow: var(--neu-in);
+            transition: all 0.2s ease;
+        }
+
+        .neumorphic-input:focus {
+            box-shadow: var(--neu-out);
+        }
+
+        .btn-submit {
+            margin-top: 10px;
+            padding: 12px;
+            border: none;
+            outline: none;
+            background-color: var(--color-primary);
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 5px 5px 10px rgba(108, 92, 231, 0.4), -5px -5px 10px rgba(255,255,255, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+            box-shadow: inset 3px 3px 5px rgba(0,0,0,0.2);
+        }
+
+        /* History Section */
+        .history-section {
+            grid-column: span 3;
+            padding: 1.5rem;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .transaction-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-radius: 15px;
+            transition: transform 0.2s;
+        }
+
+        .transaction-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .t-info h4 { margin-bottom: 5px; }
+        .t-info p { font-size: 0.8rem; color: var(--text-light); }
+        
+        .t-amount {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: var(--color-red);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            box-shadow: var(--neu-out);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-delete:active { box-shadow: var(--neu-in); }
+
+        /* === RESPONSIVE DESIGN === */
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+            .chart-section, .form-section, .history-section { grid-column: span 2; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                height: 100vh;
+                box-shadow: 10px 0 15px rgba(0,0,0,0.05);
+            }
+            .sidebar.show { left: 0; }
+            .mobile-toggle { display: block; }
+            .search-box { display: none; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .chart-section, .form-section, .history-section, .summary-card { grid-column: span 1; }
+            .main-content { padding: 1rem; }
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <header class="header neumorphic">
-            <h1>ZenBudget</h1>
-            <p>Pelacak Keuangan Pribadi</p>
-        </header>
 
-        <div class="dashboard">
-            <section class="summary-section">
-                <div class="balance-card neumorphic">
-                    <h2>Total Saldo</h2>
-                    <h3 id="total-balance">Rp 0</h3>
-                    <div class="balance-details">
-                        <div class="income">
-                            <span class="label">Pemasukan</span>
-                            <span id="total-income" class="amount text-green">Rp 0</span>
-                        </div>
-                        <div class="expense">
-                            <span class="label">Pengeluaran</span>
-                            <span id="total-expense" class="amount text-red">Rp 0</span>
-                        </div>
-                    </div>
+    <div class="app-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar neumorphic" id="sidebar">
+            <div class="brand">
+                <i class='bx bx-wallet-alt'></i> ZenBudget
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item active"><a href="#"><i class='bx bxs-dashboard'></i> Dashboard</a></li>
+                <li class="nav-item"><a href="#transaction-list"><i class='bx bx-list-ul'></i> Transaksi</a></li>
+                <li class="nav-item"><a href="#"><i class='bx bx-pie-chart-alt-2'></i> Analitik</a></li>
+                <li class="nav-item"><a href="#"><i class='bx bx-cog'></i> Pengaturan</a></li>
+            </ul>
+
+            <div class="user-profile neumorphic-inset">
+                <div class="avatar">A</div>
+                <div class="user-info">
+                    <h4>Admin User</h4>
+                    <p style="font-size: 12px; color: var(--text-light);">Pro Plan</p>
                 </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- HEADER BAR -->
+            <header class="topbar neumorphic">
+                <i class='bx bx-menu mobile-toggle' id="mobile-toggle"></i>
+                <div>
+                    <h2>Selamat Datang! 👋</h2>
+                    <p style="color: var(--text-light); font-size: 0.9rem;">Pantau keuanganmu hari ini.</p>
+                </div>
+                <div class="search-box neumorphic-inset">
+                    <i class='bx bx-search'></i>
+                    <input type="text" placeholder="Cari transaksi...">
+                </div>
+            </header>
+
+            <!-- DASHBOARD GRID -->
+            <div class="dashboard-grid">
                 
-                <div class="chart-card neumorphic">
-                    <canvas id="expenseChart"></canvas>
+                <!-- SUMMARY CARDS -->
+                <div class="summary-card neumorphic">
+                    <p>Total Saldo</p>
+                    <h2 id="total-balance" style="color: var(--color-primary)">Rp 0</h2>
                 </div>
-            </section>
+                <div class="summary-card neumorphic">
+                    <p>Pemasukan Bulan Ini</p>
+                    <h2 id="total-income" class="text-green">Rp 0</h2>
+                </div>
+                <div class="summary-card neumorphic">
+                    <p>Pengeluaran Bulan Ini</p>
+                    <h2 id="total-expense" class="text-red">Rp 0</h2>
+                </div>
 
-            <section class="form-section neumorphic-inset">
-                <h3>Tambah Transaksi</h3>
-                <form id="transaction-form">
-                    <div class="form-group">
-                        <label>Tipe</label>
-                        <select id="type" required class="neumorphic-input">
-                            <option value="expense">Pengeluaran</option>
-                            <option value="income">Pemasukan</option>
-                        </select>
+                <!-- CHART -->
+                <div class="chart-section neumorphic">
+                    <h3 style="margin-bottom: 15px;">Statistik Pengeluaran</h3>
+                    <div style="position: relative; height: 90%; width: 100%;">
+                        <canvas id="expenseChart"></canvas>
                     </div>
-                    <div class="form-group">
-                        <label>Nominal (Rp)</label>
-                        <input type="number" id="amount" required class="neumorphic-input" placeholder="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Kategori</label>
-                        <select id="category" required class="neumorphic-input">
-                            <option value="Makanan">Makanan</option>
-                            <option value="Transportasi">Transportasi</option>
-                            <option value="Hiburan">Hiburan</option>
-                            <option value="Tagihan">Tagihan</option>
-                            <option value="Gaji">Gaji/Pendapatan</option>
-                            <option value="Lainnya">Lainnya</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Catatan</label>
-                        <input type="text" id="description" class="neumorphic-input" placeholder="Contoh: Makan siang">
-                    </div>
-                    <button type="submit" class="btn-submit neumorphic-button">Simpan Transaksi</button>
-                </form>
-            </section>
+                </div>
 
-            <section class="history-section neumorphic">
-                <h3>Riwayat Terakhir</h3>
-                <ul id="transaction-list" class="transaction-list">
+                <!-- FORM -->
+                <div class="form-section neumorphic">
+                    <h3>Tambah Transaksi</h3>
+                    <form id="transaction-form" style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="type">Tipe</label>
+                            <select id="type" required class="neumorphic-input">
+                                <option value="expense">Pengeluaran</option>
+                                <option value="income">Pemasukan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="amount">Nominal (Rp)</label>
+                            <input type="number" id="amount" required class="neumorphic-input" placeholder="0" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Kategori</label>
+                            <select id="category" required class="neumorphic-input">
+                                <option value="Makanan">Makanan & Minuman</option>
+                                <option value="Transportasi">Transportasi</option>
+                                <option value="Hiburan">Hiburan & Hobi</option>
+                                <option value="Tagihan">Tagihan & Utilitas</option>
+                                <option value="Gaji">Gaji/Pendapatan</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Catatan Singkat</label>
+                            <input type="text" id="description" class="neumorphic-input" placeholder="Opsional...">
+                        </div>
+                        <button type="submit" class="btn-submit">Simpan Transaksi</button>
+                    </form>
+                </div>
+
+                <!-- HISTORY -->
+                <div class="history-section neumorphic">
+                    <div class="history-header">
+                        <h3>Riwayat Transaksi</h3>
+                        <div class="filter-box neumorphic-inset" style="padding: 5px 15px; border-radius: 10px;">
+                            <i class='bx bx-filter-alt'></i> Semua
+                        </div>
+                    </div>
+                    <ul id="transaction-list" class="transaction-list">
+                        <!-- Data List Rendered via JS -->
+                        <div style="text-align: center; padding: 20px; color: var(--text-light);">
+                            <i class='bx bx-loader-alt bx-spin' style="font-size: 2rem;"></i>
+                            <p>Memuat data...</p>
+                        </div>
                     </ul>
-            </section>
-        </div>
+                </div>
+
+            </div>
+        </main>
     </div>
 
-    <script src="app.js"></script>
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // === KONFIGURASI SUPABASE ===
+        // PERBAIKAN: Mengganti nama variabel 'supabase' menjadi 'supabaseClient' agar tidak bentrok dengan Library
+        const SUPABASE_URL = 'https://euqygknzcfouugnhujcp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1cXlna256Y2ZvdXVnbmh1amNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTg3MTUsImV4cCI6MjA4MjI5NDcxNX0.3KDqwiBgCl2KVv9OW6hMo6kVBC-EBirQLLuftMC2xYs';
+        
+        // Inisialisasi Klien
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let transactions = [];
+        let expenseChartInstance = null;
+
+        // === UTILITIES ===
+        const formatIDR = (number) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+        };
+
+        // UI Interactions
+        document.getElementById('mobile-toggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('show');
+        });
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchTransactions();
+            document.getElementById('transaction-form').addEventListener('submit', handleAddTransaction);
+        });
+
+        // === CRUD OPERATIONS ===
+        async function fetchTransactions() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('transactions')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                transactions = data || [];
+                updateUI();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('transaction-list').innerHTML = `<p style="color:red; text-align:center;">Gagal memuat data. Pastikan tabel 'transactions' sudah dibuat di Supabase.</p>`;
+            }
+        }
+
+        async function handleAddTransaction(e) {
+            e.preventDefault();
+
+            const type = document.getElementById('type').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const description = document.getElementById('description').value;
+
+            if (isNaN(amount) || amount <= 0) return alert('Nominal tidak valid!');
+
+            const newTransaction = { type, amount, category, description };
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('transactions')
+                    .insert([newTransaction])
+                    .select();
+
+                if (error) throw error;
+
+                document.getElementById('transaction-form').reset();
+                
+                // PERBAIKAN: Pastikan data tidak undefined sebelum push
+                if(data && data.length > 0){
+                    transactions.unshift(data[0]); 
+                    updateUI();
+                }
+            } catch (error) {
+                alert('Gagal menyimpan transaksi: ' + error.message);
+            }
+        }
+
+        async function deleteTransaction(id) {
+            if(!confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('transactions')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                transactions = transactions.filter(t => t.id !== id);
+                updateUI();
+            } catch (error) {
+                alert('Gagal menghapus transaksi.');
+            }
+        }
+
+        // === UI UPDATES ===
+        function updateUI() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            const categoryTotals = {};
+
+            const listContainer = document.getElementById('transaction-list');
+            listContainer.innerHTML = '';
+
+            if (transactions.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; color:#8a96a8; padding: 20px;">Belum ada data transaksi.</p>';
+            }
+
+            transactions.forEach(t => {
+                // Kalkulasi
+                if (t.type === 'income') {
+                    totalIncome += parseFloat(t.amount);
+                } else {
+                    totalExpense += parseFloat(t.amount);
+                    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + parseFloat(t.amount);
+                }
+
+                // Render List
+                const li = document.createElement('li');
+                li.className = 'transaction-item neumorphic'; // Menggunakan style neumorphic untuk tiap item
+                const isIncome = t.type === 'income';
+                
+                // Icon penentu
+                const iconHTML = isIncome 
+                    ? `<div style="padding: 10px; border-radius: 10px; background: rgba(56, 176, 0, 0.1); color: var(--color-green)"><i class='bx bx-trending-up bx-sm'></i></div>`
+                    : `<div style="padding: 10px; border-radius: 10px; background: rgba(208, 0, 0, 0.1); color: var(--color-red)"><i class='bx bx-trending-down bx-sm'></i></div>`;
+
+                li.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        ${iconHTML}
+                        <div class="t-info">
+                            <h4>${t.category}</h4>
+                            <p>${t.description || 'Tidak ada catatan'} • ${new Date(t.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})}</p>
+                        </div>
+                    </div>
+                    <div class="t-amount">
+                        <span class="${isIncome ? 'text-green' : 'text-red'}" style="font-size: 1.1rem;">
+                            ${isIncome ? '+' : '-'}${formatIDR(t.amount)}
+                        </span>
+                        <button class="btn-delete" onclick="deleteTransaction('${t.id}')" title="Hapus"><i class='bx bx-trash'></i></button>
+                    </div>
+                `;
+                listContainer.appendChild(li);
+            });
+
+            const totalBalance = totalIncome - totalExpense;
+
+            // Update Cards
+            document.getElementById('total-balance').innerText = formatIDR(totalBalance);
+            document.getElementById('total-income').innerText = formatIDR(totalIncome);
+            document.getElementById('total-expense').innerText = formatIDR(totalExpense);
+
+            updateChart(categoryTotals);
+        }
+
+        // === CHART.JS SETUP ===
+        function updateChart(categoryTotals) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            
+            const labels = Object.keys(categoryTotals);
+            const data = Object.values(categoryTotals);
+
+            if (expenseChartInstance) {
+                expenseChartInstance.destroy();
+            }
+
+            // Warna Neumorphic-friendly
+            const colors = ['#6c5ce7', '#00cec9', '#fdcb6e', '#ff7675', '#0984e3', '#e84393'];
+
+            expenseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length ? labels : ['Belum ada pengeluaran'],
+                    datasets: [{
+                        data: data.length ? data : [1],
+                        backgroundColor: data.length ? colors : ['#e0e5ec'],
+                        borderWidth: 2,
+                        borderColor: '#e0e5ec',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#4d5974', font: { family: "'Segoe UI', sans-serif" } } }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+    </script>
 </body>
 </html>
