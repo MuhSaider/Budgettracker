@@ -1,6 +1,6 @@
 const SUPABASE_URL = 'https://euqygknzcfouugnhujcp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1cXlna256Y2ZvdXVnbmh1amNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTg3MTUsImV4cCI6MjA4MjI5NDcxNX0.3KDqwiBgCl2KVv9OW6hMo6kVBC-EBirQLLuftMC2xYs';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
 let transactions = [];
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 async function fetchTransactions() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('transactions')
         .select('*')
         .order('created_at', { ascending: false });
@@ -45,7 +45,7 @@ async function handleAddTransaction(e) {
 
     const newTransaction = { type, amount, category, description };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('transactions')
         .insert([newTransaction])
         .select();
@@ -67,7 +67,7 @@ async function handleAddTransaction(e) {
 async function deleteTransaction(id) {
     if(!confirm('Hapus transaksi ini?')) return;
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
         .from('transactions')
         .delete()
         .eq('id', id);
