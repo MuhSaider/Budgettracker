@@ -1,25 +1,25 @@
-// --- KONFIGURASI SUPABASE ---
+
 const SUPABASE_URL = 'https://euqygknzcfouugnhujcp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1cXlna256Y2ZvdXVnbmh1amNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MTg3MTUsImV4cCI6MjA4MjI5NDcxNX0.3KDqwiBgCl2KVv9OW6hMo6kVBC-EBirQLLuftMC2xYs';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// --- STATE MANAGEMENT ---
+
 let transactions = [];
 let expenseChartInstance = null;
 
-// --- FORMAT RUPIAH ---
+
 const formatIDR = (number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
 };
 
-// --- INIT APLIKASI ---
+
 document.addEventListener('DOMContentLoaded', () => {
     fetchTransactions();
     
     document.getElementById('transaction-form').addEventListener('submit', handleAddTransaction);
 });
 
-// --- AMBIL DATA DARI SUPABASE ---
+
 async function fetchTransactions() {
     const { data, error } = await supabase
         .from('transactions')
@@ -35,7 +35,7 @@ async function fetchTransactions() {
     updateUI();
 }
 
-// --- TAMBAH TRANSAKSI KE SUPABASE ---
+
 async function handleAddTransaction(e) {
     e.preventDefault();
 
@@ -56,15 +56,15 @@ async function handleAddTransaction(e) {
         return;
     }
 
-    // Reset Form
+
     document.getElementById('transaction-form').reset();
     
-    // Update State & UI
+
     transactions.unshift(data[0]);
     updateUI();
 }
 
-// --- HAPUS TRANSAKSI ---
+
 async function deleteTransaction(id) {
     if(!confirm('Hapus transaksi ini?')) return;
 
@@ -82,7 +82,7 @@ async function deleteTransaction(id) {
     updateUI();
 }
 
-// --- UPDATE TAMPILAN (SALDO, LIST, CHART) ---
+
 function updateUI() {
     let totalIncome = 0;
     let totalExpense = 0;
@@ -98,11 +98,11 @@ function updateUI() {
         } else {
             totalExpense += parseFloat(t.amount);
             
-            // Kalkulasi Kategori untuk Chart (hanya pengeluaran)
+
             categoryTotals[t.category] = (categoryTotals[t.category] || 0) + parseFloat(t.amount);
         }
 
-        // Render List
+
         const li = document.createElement('li');
         li.className = 'transaction-item';
         const isIncome = t.type === 'income';
@@ -124,7 +124,7 @@ function updateUI() {
 
     const totalBalance = totalIncome - totalExpense;
 
-    // Update Text Saldo
+
     document.getElementById('total-balance').innerText = formatIDR(totalBalance);
     document.getElementById('total-income').innerText = formatIDR(totalIncome);
     document.getElementById('total-expense').innerText = formatIDR(totalExpense);
@@ -132,7 +132,7 @@ function updateUI() {
     updateChart(categoryTotals);
 }
 
-// --- UPDATE GRAFIK CHART.JS ---
+
 function updateChart(categoryTotals) {
     const ctx = document.getElementById('expenseChart').getContext('2d');
     
@@ -143,7 +143,7 @@ function updateChart(categoryTotals) {
         expenseChartInstance.destroy();
     }
 
-    // Warna pastel modern untuk chart
+
     const colors = ['#ff9fb1', '#ffc49f', '#ffdf9f', '#9fffb1', '#9fcdff', '#c49fff'];
 
     expenseChartInstance = new Chart(ctx, {
