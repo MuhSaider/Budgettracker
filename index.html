@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenBudget - Profesional Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header neumorphic">
+            <h1>ZenBudget</h1>
+            <p>Pelacak Keuangan Pribadi</p>
+        </header>
+
+        <div class="dashboard">
+            <section class="summary-section">
+                <div class="balance-card neumorphic">
+                    <h2>Total Saldo</h2>
+                    <h3 id="total-balance">Rp 0</h3>
+                    <div class="balance-details">
+                        <div class="income">
+                            <span class="label">Pemasukan</span>
+                            <span id="total-income" class="amount text-green">Rp 0</span>
+                        </div>
+                        <div class="expense">
+                            <span class="label">Pengeluaran</span>
+                            <span id="total-expense" class="amount text-red">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-card neumorphic">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </section>
+
+            <section class="form-section neumorphic-inset">
+                <h3>Tambah Transaksi</h3>
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label>Tipe</label>
+                        <select id="type" required class="neumorphic-input">
+                            <option value="expense">Pengeluaran</option>
+                            <option value="income">Pemasukan</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nominal (Rp)</label>
+                        <input type="number" id="amount" required class="neumorphic-input" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="category" required class="neumorphic-input">
+                            <option value="Makanan">Makanan</option>
+                            <option value="Transportasi">Transportasi</option>
+                            <option value="Hiburan">Hiburan</option>
+                            <option value="Tagihan">Tagihan</option>
+                            <option value="Gaji">Gaji/Pendapatan</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Catatan</label>
+                        <input type="text" id="description" class="neumorphic-input" placeholder="Contoh: Makan siang">
+                    </div>
+                    <button type="submit" class="btn-submit neumorphic-button">Simpan Transaksi</button>
+                </form>
+            </section>
+
+            <section class="history-section neumorphic">
+                <h3>Riwayat Terakhir</h3>
+                <ul id="transaction-list" class="transaction-list">
+                    </ul>
+            </section>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
